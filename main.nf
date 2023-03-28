@@ -209,7 +209,7 @@ process merge_gff_bundles{
 
     for fn in ${gff_bundle};
     do
-        grep -v -s '#' \$fn >> $merged_gff
+        grep -v -q '#' \$fn >> $merged_gff
 
     done
     """
