@@ -173,8 +173,9 @@ def dexseq_section(dexseq_file, section, id_dic):
     section.markdown(dexseq_caption)
     dexseq_results = pd.read_csv(dexseq_file, sep='\t')
     dexseq_results.index.name = "gene_id:trancript_id"
+    # Replace gene id with more useful gene name where possible
     dexseq_results.index = dexseq_results.index.map(
-        lambda x: id_dic[x.split(':')[0]] + ':' + str(x.split(':')[1]))
+        lambda x: str(id_dic.get(x.split(':')[0])) + ':' + str(x.split(':')[1]))
     dexseq_pvals = dexseq_results.sort_values(by='pvalue', ascending=True)
     section.table(dexseq_results.loc[dexseq_pvals.index], index=True)
     section.markdown("""
@@ -220,8 +221,10 @@ thresholds defined are shaded as 'Up-' or 'Down-' regulated.""")
 def dtu_section(dtu_file, section, gt_dic, ge_dic):
     """Plot dtu section."""
     dtu_results = pd.read_csv(dtu_file, sep='\t')
-    dtu_results["gene_name"] = dtu_results["txID"].apply(lambda x: gt_dic[x])
-    dtu_results["geneID"] = dtu_results["geneID"].apply(lambda x: ge_dic[x])
+    dtu_results["gene_name"] = dtu_results["txID"].apply(
+        lambda x: gt_dic.get(x))
+    dtu_results["geneID"] = dtu_results["geneID"].apply(
+        lambda x: ge_dic.get(x))
     dtu_pvals = dtu_results.sort_values(by='gene', ascending=True)
     dtu_caption = '''Table showing gene and transcript identifiers
     and their FDR corrected probabilities
@@ -232,6 +235,31 @@ def dtu_section(dtu_file, section, gt_dic, ge_dic):
     threshold'''
     section.markdown(dtu_caption)
     section.table(dtu_results.loc[dtu_pvals.index])
+
+
+def copy_dge_add_gene_names(dge_file, geid_gname, newfile_name):
+    """Add gene name column to DGE TSV with gene ID to gene Name dict."""
+    dge_results = pd.read_csv(dge_file, sep='\t')
+    column_to_move = dge_results.index.map(
+        lambda x: geid_gname.get(x))
+    dge_results.insert(0, "gene_name", column_to_move)
+    dge_results.to_csv(newfile_name, index=True, index_label="gene_id",  sep="\t")
+
+
+def copy_filtered_add_gene_names(unfiltered_file, geid_gname, newfile_name):
+    """Use gene id to gene name dict to add name column to counts TSV."""
+    unfiltered = pd.read_csv(unfiltered_file, sep='\t')
+    unfiltered.insert(1, "gene_name",  unfiltered.gene_id.map(
+        lambda x: geid_gname.get(x)))
+    unfiltered.to_csv(newfile_name, index=False, sep='\t')
+
+
+def copy_tpm_add_gene_names(tpm_file, txid_gname, newfile_name):
+    """Use transcript id to gene name dict to add name column to TPM TSV."""
+    tpm = pd.read_csv(tpm_file, sep='\t')
+    tpm.insert(1, "gene_name", tpm.Reference.map(
+        lambda x: txid_gname.get(x)))
+    tpm.to_csv(newfile_name, index=False, sep='\t')
 
 
 def dge_section(dge_file, section, ids_dic):
@@ -248,8 +276,8 @@ experimental conditions, the log-scaled counts per million measure of abundance
 and the false discovery corrected p-value (FDR). This table has not been
 filtered for genes that satisfy statistical or magnitudinal thresholds"""
     section.markdown(dge_caption)
-    dge_results.index = dge_results.index.map(lambda x: ids_dic[x])
-    dge_pvals.index = dge_pvals.index.map(lambda x: ids_dic[x])
+    dge_results.index = dge_results.index.map(lambda x: ids_dic.get(x))
+    dge_pvals.index = dge_pvals.index.map(lambda x: ids_dic.get(x))
     section.table(dge_results.loc[dge_pvals.index], index=True)
     dge = pd.read_csv(dge_file, sep="\t")
     section.markdown("""
@@ -305,38 +333,54 @@ def salmon_table(salmon_counts, section):
 
 
 def get_translations(gtf):
-    """Create dic with gene_name and gene_references."""
+    """Create dict with gene_name and gene_references."""
     fn = open(gtf).readlines()
     gene_txid = {}
     gene_geid = {}
+    geid_gname = {}
+
+    def get_feature(row, feature):
+        return row.split(feature)[1].split(
+            ";")[0].replace('=', '').replace("\"", "").strip()
+
     for i in fn:
         if i.startswith("#"):
             continue
-        try:
-            gene_name = i.split("gene_name")[1].split(";")[0]
-        except Exception:
-            gene_name = i.split("gene_id")[1].split(";")[0]
-        try:
-            gene_reference = i.split("ref_gene_id")[1].split(";")[0]
-        except Exception:
-            gene_reference = i.split("gene_id")[1].split(";")[0]
-        try:
-            transcript_id = i.split("transcript_id")[1].split(";")[0]
-        except Exception:
+        # Different gtf/gff formats contain different attributes
+        # and different formating (eg. gene_name="xyz" or gene_name "xyz")
+        if 'gene_name' in i:
+            gene_name = get_feature(i, "gene_name")
+        elif 'gene_id' in i:
+            gene_name = get_feature(i, 'gene_id')
+        elif 'gene' in i:
+            gene_name = get_feature(i, "gene")
+        else:
+            continue
+
+        if 'ref_gene_id' in i:
+            gene_reference = get_feature(i, 'ref_gene_id')
+        elif 'gene_id' in i:
+            gene_reference = get_feature(i, 'gene_id')
+        else:
+            gene_reference = gene_name
+        if 'transcript_id' in i:
+            transcript_id = get_feature(i, 'transcript_id')
+        else:
             transcript_id = "unknown"
-        transcript_id = transcript_id.replace("\"", "").strip()
-        gene_id = i.split("gene_id")[1].split(";")[0]
-        gene_id = gene_id.replace("\"", "").strip()
-        gene_name = gene_name.replace("\"", "").strip()
-        gene_reference = gene_reference.replace("\"", "").strip()
+        if 'gene_id' in i:
+            gene_id = get_feature(i, 'gene_id')
+        else:
+            gene_id = gene_name
         gene_txid[transcript_id] = gene_name
         gene_geid[gene_id] = gene_reference
-    return gene_txid, gene_geid
+        geid_gname[gene_reference] = gene_name
+    return gene_txid, gene_geid, geid_gname
 
 
 def de_section(
         stringtie, dge, dexseq, dtu,
-        tpm, report):
+        tpm, report, filtered, unfiltered,
+        gene_counts):
     """Differential expression sections."""
     section = report.add_section()
     section.markdown("# Differential expression.")
@@ -348,6 +392,10 @@ the GTF-format annotation.
 These counts were used to perform a statistical analysis to identify
 the genes and isoforms that show differences in abundance between
 the experimental conditions.
+Any novel genes or transcripts that do not have relevant gene or transcript IDs
+are prefixed with MSTRG for use in differential expression analysis.
+Find the full sequences of any transcripts in the
+`final_non_redundant_transcriptome.fasta` file.
     """)
     section.markdown("### Alignment summary stats")
     alignment_stats = pool_csvs("seqkit")
@@ -355,7 +403,17 @@ the experimental conditions.
     alignment_summary_df = alignment_summary_df.fillna(0).applymap(np.int64)
     section.table(alignment_summary_df, key='alignment-stats', index=True)
     salmon_table(tpm, section)
-    gene_txid, gene_name = get_translations(stringtie)
+    gene_txid, gene_name, geid_gname = get_translations(stringtie)
+    # Use dictionaries to add gene names to the counts tsv files to help users
+    copy_dge_add_gene_names(dge, geid_gname, "results_dge.tsv")
+    copy_dge_add_gene_names(gene_counts, geid_gname, "all_gene_counts.tsv")
+    copy_filtered_add_gene_names(
+        filtered, geid_gname, "filtered_transcript_counts_with_genes.tsv")
+    copy_filtered_add_gene_names(
+        unfiltered, geid_gname, "unfiltered_transcript_counts_with_genes.tsv")
+    copy_tpm_add_gene_names(tpm, gene_txid, "unfiltered_tpm_transcript_counts.tsv")
+
+    # Add tables to report
     dge_section(dge, section, gene_name)
     dexseq_section(dexseq, section, gene_name)
     dtu_section(dtu, section, gene_txid, gene_name)
