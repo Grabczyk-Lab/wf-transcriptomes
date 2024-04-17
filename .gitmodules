@@ -1,0 +1,3 @@
+[submodule "ggsashimi"]
+	path = ggsashimi
+	url = https://github.com/aw1231/ggsashimi.git
