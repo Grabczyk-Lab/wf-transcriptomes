@@ -5,3 +5,6 @@ template-workflow
 .*.swo
 *.pyc
 *.pyo
+output
+differential_expression
+work
