@@ -176,7 +176,6 @@ process build_minimap_index{
     */
     label "isoforms"
     cpus params.threads
-    memory "31 GB"
 
     input:
         path reference

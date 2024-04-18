@@ -16,7 +16,6 @@ process count_transcripts {
     // library type is specified as forward stranded (-l SF) as it should have either been through pychopper or come from direct RNA reads.
     label "isoforms"
     cpus params.threads
-    memory "16 GB"
     input:
         tuple val(meta), path(bam), path(ref_transcriptome)
     output:
@@ -61,7 +60,6 @@ process mergeTPM {
 process deAnalysis {
     label "isoforms"
     cpus 4
-    memory "16 GB"
     input:
         path "sample_sheet.csv"
         path "all_counts.tsv" 
@@ -115,7 +113,6 @@ process build_minimap_index_transcriptome{
     */
     label "isoforms"
     cpus params.threads
-    memory "16 GB"
     input:
         path reference
     output:
@@ -136,7 +133,6 @@ process map_transcriptome{
     */
     label "isoforms"
     cpus params.threads
-    memory "16 GB"
 
     input:
        tuple val(meta), path (fastq_reads), path(index)

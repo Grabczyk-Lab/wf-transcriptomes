@@ -2,7 +2,6 @@
 process jaffal{
     label "isoforms"
     cpus params.threads
-    memory "31 GB"
     input:
         tuple val(sample_id), path(fastq)
         path refBase
