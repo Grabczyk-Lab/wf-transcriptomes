@@ -13,6 +13,7 @@ include { fastq_ingress } from './lib/ingress'
 include { reference_assembly } from './subworkflows/reference_assembly'
 include { gene_fusions } from './subworkflows/JAFFAL/gene_fusions'
 include { differential_expression } from './subworkflows/differential_expression'
+include { ggsashimi } from './subworkflows/ggsashimi'
 
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
@@ -725,6 +726,7 @@ workflow pipeline {
 
         results.concat(workflow_params.map{ [it, null]})
 
+        ggsashimi(merge_gff, ref_annotation, ref_transcriptome)
        
     emit:
         results
@@ -733,8 +735,6 @@ workflow pipeline {
 // entrypoint workflow
 WorkflowMain.initialise(workflow, params, log)
 workflow {
-
-    Pinguscript.ping_start(nextflow, workflow, params)
 
     fastq = file(params.fastq, type: "file")
 
@@ -822,11 +822,4 @@ workflow {
 
         output(pipeline.out.results)
     }
-}
-
-workflow.onComplete {
-    Pinguscript.ping_complete(nextflow, workflow, params)
-}
-workflow.onError {
-    Pinguscript.ping_error(nextflow, workflow, params)
 }
