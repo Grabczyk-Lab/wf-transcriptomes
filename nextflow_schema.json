@@ -1,12 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
-    "title": "epi2me-labs/wf-transcriptomes",
-    "workflow_title": "Workflow Transcriptomes",
-    "description": "Transcriptome analysis including assembly and annotation of cDNA and direct RNA sequencing data, gene fusions and differential expression.",
-    "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-transcriptomes/wf-transcriptomes-demo.tar.gz",
-    "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-transcriptomes/wf-transcriptomes-demo/aws.nextflow.config",
-    "url": "https://github.com/epi2me-labs/wf-transcriptomes",
+    "title": "aw1231/wf-transcriptomes",
+    "workflow_title": "Workflow GGSashimi Transcriptomes",
+    "description": "Transcriptome analysis including assembly and annotation of cDNA and direct RNA sequencing data, using GGSashimi and a read by read analysis.",
+    "url": "https://github.com/aw1231/wf-transcriptomes",
     "type": "object",
     "definitions": {
         "input_options": {
@@ -175,84 +173,6 @@
                 }
             }
         },
-        "gene_fusion_detection_options": {
-            "title": "Gene Fusion Detection Options",
-            "type": "object",
-            "description": "Parameters for gene fusion detection",
-            "properties": {
-                "jaffal_refBase": {
-                    "type": "string",
-                    "title": "JAFFAL reference genome directory",
-                    "format": "directory-path",
-                    "description": "JAFFAl reference genome directory.",
-                    "help_text": "JAFFAL human hg38 reference data directory can be downloaded from here: https://figshare.com/ndownloader/files/25410494 or see the README for alternative instructions. If custom gemome files are required, see the instructions here: https://github.com/Oshlack/JAFFA/wiki/FAQandTroubleshooting#how-can-i-generate-the-reference-files-for-a-non-supported-genome."
-                },
-                "jaffal_genome": {
-                    "type": "string",
-                    "title": "JAFFAL genome reference prefix",
-                    "description": "Genome reference prefix. e.g. hg38.",
-                    "help_text": "JAFFAL reference files are prefixed with the genome reference file name and need to be supplied . If using the human reference data provided by JAFFAL, this can be left at `hg38`.",
-                    "default": "hg38"
-                },
-                "jaffal_annotation": {
-                    "type": "string",
-                    "title": "JAFFAL annotation suffix",
-                    "description": "Annotation suffix.",
-                    "help_text": "JAFFAL reference files are suffixed with the annotation filename and this needs to be supplied. For the human hg38 reference data supplied by JAFFAL, this is `genCode22`.",
-                    "default": "genCode22"
-                },
-                "jaffal_dir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Path to the JAFFAL code directory. If running within EPI2ME-Labs, the default path of /home/epi2melabs/JAFFA within the application container will be used. If using outside of EPI2ME-Labs, the path to the code directory downloaded from github should be supplied.",
-                    "default": "/home/epi2melabs/JAFFA",
-                    "hidden": true
-                }
-            }
-        },
-        "differential_expression_options": {
-            "title": "Differential Expression Options",
-            "type": "object",
-            "description": "Options relevant to the differential expression section of the workflow, only need to set if running DE.",
-            "default": "",
-            "properties": {
-                "de_analysis": {
-                    "type": "boolean",
-                    "default": false,
-                    "title": "Differential expression analysis",
-                    "description": "Run DE anaylsis",
-                    "help_text": "Running this requires you to provide at least two replicates for a control and treated sample as well as a sample sheet param."
-                },
-                "min_gene_expr": {
-                    "type": "integer",
-                    "title": "Minimum gene expression",
-                    "default": 10,
-                    "description": "The minimum number of total mapped sequence reads required for a gene to be considered in differential transcript usage analysis.",
-                    "help_text": "Filtering at the gene level ensures that the observed transcript ratios are calculated with a minimum number of counts per gene."
-                },
-                "min_feature_expr": {
-                    "type": "integer",
-                    "title": "Minimum feature expression",
-                    "default": 3,
-                    "description": "The minimum number of reads assigned to a transcript for it to be considered in differential transcript usage analysis.",
-                    "help_text": "Filter out transcripts that do not have this minimum number of transcript expression, reducing noise."
-                },
-                "min_samps_gene_expr": {
-                    "type": "integer",
-                    "title": "Minimum samples with gene expression",
-                    "description": "Set the minimum number of samples in which a gene is expressed to be included in the differential transcript usage analysis.",
-                    "default": 3,
-                    "help_text": "A gene must be expressed in at least this number of samples for the gene be included in the differential transcript usage analysis. Filtering at the gene level improves the reliability of the observed transcript ratios."
-                },
-                "min_samps_feature_expr": {
-                    "type": "integer",
-                    "title": "Minimum samples with feature expression",
-                    "default": 1,
-                    "description": "Set the minimum number of samples in which a transcript is expressed to be included in the differential transcript usage analysis.",
-                    "help_text": "A transcript must expressed in at least this minimum number of samples to be included in the analysis. Should be equal to the number of replicates per sample you have."
-                }
-            }
-        },
         "advanced_options": {
             "title": "Advanced Options",
             "type": "object",
@@ -321,11 +241,6 @@
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
-                "disable_ping": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable to prevent sending a workflow ping."
-                },
                 "version": {
                     "type": "boolean",
                     "default": false,
@@ -349,12 +264,6 @@
             "$ref": "#/definitions/options_for_reference_based_workflow"
         },
         {
-            "$ref": "#/definitions/gene_fusion_detection_options"
-        },
-        {
-            "$ref": "#/definitions/differential_expression_options"
-        },
-        {
             "$ref": "#/definitions/advanced_options"
         },
         {
@@ -362,14 +271,6 @@
         }
     ],
     "properties": {
-        "aws_image_prefix": {
-            "type": "string",
-            "hidden": true
-        },
-        "aws_queue": {
-            "type": "string",
-            "hidden": true
-        },
         "monochrome_logs": {
             "type": "boolean"
         },
