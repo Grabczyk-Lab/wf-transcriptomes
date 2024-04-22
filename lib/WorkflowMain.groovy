@@ -13,7 +13,7 @@ class WorkflowMain {
     // Generate help string
     public static String help(workflow, params, log) {
         String line_sep = ' \\ \n\t'
-        String command_example = params.wf.example_cmd.join(line_sep)
+        String command_example = ''
         String command = 'nextflow run ' + workflow.manifest.name + line_sep + command_example
         String help_string = ''
         help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
