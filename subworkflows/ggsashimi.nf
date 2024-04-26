@@ -2,7 +2,7 @@ process ggsashimi_plot {
     label "ggsashimi_plot"
     input:
         file ref_annotation
-        string chromosome
+        chromosome
         int start_locus
         int end_locus
         tuple bam
@@ -22,5 +22,5 @@ workflow ggsashimi {
         start_locus
         end_locus
     main:
-        ggsashimi_plot(bam, ref_annotation, chromosome, start_locus, end_locus)
+        ggsashimi_plot(ref_annotation, chromosome, start_locus, end_locus, bam)
 }

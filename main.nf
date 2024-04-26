@@ -395,13 +395,10 @@ process makeReport {
         path versions
         path "params.json"
         path "pychopper_report/*"
-        path"jaffal_csv/*"
         path "per_read_stats/?.gz"
         path "aln_stats/*"
         path "gffcmp_dir/*"
         path "gff_annotation/*"
-        path "de_report/*"
-        path "seqkit/*"
         path "isoforms_table/*"
     output:
         path ("wf-transcriptomes-*.html"), emit: report
@@ -525,9 +522,6 @@ workflow pipeline {
         reads
         ref_genome
         ref_annotation
-        jaffal_refBase
-        jaffal_genome
-        jaffal_annotation
         ref_transcriptome
         use_ref_ann
     main:
@@ -639,50 +633,15 @@ workflow pipeline {
             use_ref_ann = false
  
         }
-        if (jaffal_refBase){
-                gene_fusions(full_len_reads, jaffal_refBase, jaffal_genome, jaffal_annotation)
-                jaffal_out = gene_fusions.out.results_csv.map{ alias, csv -> csv}.collectFile(keepHeader: true, name: 'jaffal.csv')
-            } else{
-                jaffal_out = OPTIONAL_FILE
-        }
-
-        if (params.de_analysis){
-            sample_sheet = file(params.sample_sheet, type:"file")
-            if (!params.ref_transcriptome){
-                merge_transcriptomes(run_gffcompare.output.gtf.collect(), ref_annotation, ref_genome)
-                transcriptome = merge_transcriptomes.out.fasta
-                gtf = merge_transcriptomes.out.gtf
-            }
-            else {
-                transcriptome =  Channel.fromPath(ref_transcriptome)
-                if (file(params.ref_transcriptome).extension == "gz") {
-                    transcriptome = decompress_transcriptome(ref_transcriptome)
-                }
-                transcriptome = preprocess_ref_transcriptome(transcriptome)
-                gtf = ref_annotation
-            }
-            de = differential_expression(transcriptome, input_reads, sample_sheet, gtf)
-            de_report = de.all_de
-            count_transcripts_file = de.count_transcripts
-            dtu_plots = de.dtu_plots
-            de_outputs = de.de_outputs
-            counts = de.counts
-        } else{
-            de_report = OPTIONAL_FILE
-            count_transcripts_file = OPTIONAL_FILE
-        }
         
         makeReport(
             software_versions,
             workflow_params,
             pychopper_report,
-            jaffal_out,
             per_read_stats,
             assembly_stats,
             gff_compare,
             merge_gff,
-            de_report,
-            count_transcripts_file,
             isoforms_table)
 
        report = makeReport.out.report
@@ -706,27 +665,18 @@ workflow pipeline {
                       .concat(results)
 
         }
-        if (params.jaffal_refBase){
-            results = results
-                .concat(gene_fusions.out.results
-                .map {it -> it[1]})
-        }
         
        results = results.map{ [it, null] }.concat(fastq_ingress_results.map { [it, "fastq_ingress_results"] })
-        
-        if (params.de_analysis){
-           de_results = report.concat(
-            transcriptome, de_outputs.flatten(), counts.flatten(),
-            makeReport.out.results_dge,  makeReport.out.tpm,
-            makeReport.out.filtered,  makeReport.out.unfiltered,
-            makeReport.out.gene_counts)
-            // Output de_analysis results in the dedicated directory.
-            results = results.concat(de_results.map{ [it, "de_analysis"] })
-        }
 
         results.concat(workflow_params.map{ [it, null]})
 
-        ggsashimi(merge_gff, ref_annotation, ref_transcriptome)
+        chromosome = params.chromosome
+
+        start_position = params.start_position
+
+        end_position = params.end_position
+
+        ggsashimi(merge_gff, ref_annotation, chromosome, start_position, end_position)
        
     emit:
         results
@@ -777,33 +727,11 @@ workflow {
         ref_annotation= OPTIONAL_FILE
         use_ref_ann = false
     }
-    if (params.jaffal_refBase){
-        jaffal_refBase = file(params.jaffal_refBase, type: "dir")
-        if (!jaffal_refBase.exists()) {
-            error = "--jaffa_refBase: Directory doesn't exist, check path."
-        }
-     }else{
-        jaffal_refBase = null
-     }
+    params.ref_transcriptome = null
     ref_transcriptome = OPTIONAL_FILE
     if (params.ref_transcriptome){
         log.info("Reference Transcriptome provided will be used for differential expression.")
         ref_transcriptome = file(params.ref_transcriptome, type:"file")
-    }
-    if (params.de_analysis){
-        if (!params.ref_annotation){
-            error = "When running in --de_analysis mode you must provide a reference annotation."
-        }
-        if (!params.sample_sheet){
-            error = "You must provide a sample_sheet with at least alias and condition columns."
-        }
-        if (params.containsKey("condition_sheet")) {
-        error = "Condition sheets have been deprecated. Please add a 'condition' column to your sample sheet instead. Check the quickstart for more information."
-        }
-    } else{
-        if (!params.ref_annotation){
-            log.info("Warning: As no --ref_annotation was provided, the output transcripts will not be annotated.")
-        }
     }
     if (error){
         throw new Exception(error)
@@ -817,7 +745,6 @@ workflow {
         "fastcat_extra_args": ""])
 
         pipeline(reads, ref_genome, ref_annotation,
-            jaffal_refBase, params.jaffal_genome, params.jaffal_annotation,
             ref_transcriptome, use_ref_ann)
 
         output(pipeline.out.results)

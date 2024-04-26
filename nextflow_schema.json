@@ -67,6 +67,21 @@
                     "title": "Analyse unclassified",
                     "description": "Analyse unclassified reads from input directory. By default the workflow will not process reads in the unclassified directory.",
                     "help_text": "If selected and if the input is a multiplex directory the workflow will also process the unclassified directory."
+                },
+                "chromosome": {
+                    "type": "string",
+                    "title": "Chromosome",
+                    "description": "Chromosome to analyse."
+                },
+                "starting_position": {
+                    "type": "integer",
+                    "title": "Starting position",
+                    "description": "Starting position for analysis."
+                },
+                "ending_position": {
+                    "type": "integer",
+                    "title": "Ending position",
+                    "description": "Ending position for analysis."
                 }
             },
             "allOf": [
