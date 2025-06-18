@@ -3,12 +3,21 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | fastq | string | FASTQ files to use in the analysis. | This accepts one of three cases: (i) the path to a single FASTQ file; (ii) the path to a top-level directory containing FASTQ files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`. |  |
-| transcriptome_source | string | Select how the transcriptome used for analysis should be prepared. | To analyse only gene fusions and differential expression use of an existing transcriptome may be preferred and so 'precomputed' should be selected. In this case the 'ref_transcriptome' parameter should be specified. To create a reference transcriptome using an existing reference genome, select 'reference guided' and specify the 'ref_genome' parameter. | reference-guided |
+| bam | string | BAM or unaligned BAM (uBAM) files to use in the analysis. | This accepts one of three cases: (i) the path to a single BAM file; (ii) the path to a top-level directory containing BAM files; (iii) the path to a directory containing one level of sub-directories which in turn contain BAM files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`. |  |
+| transcriptome_source | string | Select how the transcriptome used for analysis should be prepared. | For differential expression analysis, use of an existing transcriptome may be preferred and so 'precomputed' should be selected. In this case the 'ref_transcriptome' parameter should be specified. To create a reference transcriptome using an existing reference genome, select 'reference guided' and specify the 'ref_genome' parameter. | reference-guided |
 | ref_genome | string | Path to reference genome sequence [.fa/.fq/.fa.gz/fq.gz]. Required for reference-based workflow. | A reference genome is required for reference-based assembly of a transcriptome. |  |
 | ref_transcriptome | string | Transcriptome reference file. Required for precomputed transcriptome calculation and for differential expression analysis. | A reference transcriptome related to the sample under study. Must be supplied when the 'Transcriptome source' parameter has been set to 'precomputed' or to perform differential expression. |  |
-| ref_annotation | string | A reference annotation in GFF2 or GFF3 format (extensions .gtf(.gz), .gff(.gz), .gff3(.gz)). Only annotation files from [Encode](https://www.encodeproject.org), [Ensembl](https://www.ensembl.org/index.html) and [NCBI](https://www.ncbi.nlm.nih.gov/) are supported. | This will be used for guiding the transcriptome assembly and to label transcripts with their corresponding gene identifiers. |  |
+| ref_annotation | string | A reference annotation in GFF2 or GFF3 format (extensions .gtf(.gz), .gff(.gz), .gff3(.gz)). Only annotation files from [Encode](https://www.encodeproject.org), [Ensembl](https://www.ensembl.org/index.html) and [NCBI](https://www.ncbi.nlm.nih.gov/) are supported. | This will be used for guiding the transcriptome assembly and to label transcripts with their corresponding gene identifiers. Note: If in de_analysis mode transcript strands must be only + or -. |  |
 | direct_rna | boolean | Set to true for direct RNA sequencing. |  Omits the pychopper step. | False |
 | analyse_unclassified | boolean | Analyse unclassified reads from input directory. By default the workflow will not process reads in the unclassified directory. | If selected and if the input is a multiplex directory the workflow will also process the unclassified directory. | False |
+
+
+### Output Options
+
+| Nextflow parameter name  | Type | Description | Help | Default |
+|--------------------------|------|-------------|------|---------|
+| out_dir | string | Directory for output of all user-facing files. |  | output |
+| igv | boolean | Visualize outputs in the EPI2ME IGV visualizer. | Enabling this option will visualize the output alignment files in the EPI2ME Desktop App IGV visualizer. | False |
 
 
 ### Sample Options
@@ -25,19 +34,10 @@
 |--------------------------|------|-------------|------|---------|
 | plot_gffcmp_stats | boolean | Create a PDF of plots from showing gffcompare results | If set to true, a PDF file containing detailed gffcompare reults will be output | True |
 | gffcompare_opts | string | Extra command-line options to give to gffcompare -r | For a list of possible options see [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml). | -R |
-| minimap2_index_opts | string | Extra command-line options for minimap2 indexing. | See [minimap2 index options](https://lh3.github.io/minimap2/minimap2.html#4) for more information. These will only be relevant in the reference based transcriptome assembly. | -k14 |
+| minimap2_index_opts | string | Extra command-line options for minimap2 indexing. | See [minimap2 index options](https://lh3.github.io/minimap2/minimap2.html#4) for more information. These will only be relevant in the reference based transcriptome assembly. | -k 14 |
 | minimap2_opts | string | Additional command-line options for minimap2 alignment. | See [minimap2 options](https://lh3.github.io/minimap2/minimap2.html#5) for further information. These will only be relevant in the reference based transcriptome assembly. | -uf |
 | minimum_mapping_quality | integer | filter aligned reads by MAPQ quality. | Reads that do not meet this mapping quality after minimap2 alignment, will be filtered out. | 40 |
 | stringtie_opts | string | Extra command-line options for stringtie transcript assembly. | For additional String tie options see [here](https://github.com/gpertea/stringtie#stringtie-options). | --conservative |
-
-
-### Gene Fusion Detection Options
-
-| Nextflow parameter name  | Type | Description | Help | Default |
-|--------------------------|------|-------------|------|---------|
-| jaffal_refBase | string | JAFFAl reference genome directory. | JAFFAL human hg38 reference data directory can be downloaded from here: https://figshare.com/ndownloader/files/25410494 or see the README for alternative instructions. If custom gemome files are required, see the instructions here: https://github.com/Oshlack/JAFFA/wiki/FAQandTroubleshooting#how-can-i-generate-the-reference-files-for-a-non-supported-genome. |  |
-| jaffal_genome | string | Genome reference prefix. e.g. hg38. | JAFFAL reference files are prefixed with the genome reference file name and need to be supplied . If using the human reference data provided by JAFFAL, this can be left at `hg38`. | hg38 |
-| jaffal_annotation | string | Annotation suffix. | JAFFAL reference files are suffixed with the annotation filename and this needs to be supplied. For the human hg38 reference data supplied by JAFFAL, this is `genCode22`. | genCode22 |
 
 
 ### Differential Expression Options
@@ -61,12 +61,5 @@
 | pychopper_opts | string | Extra pychopper opts | See available options (here)[https://github.com/epi2me-labs/pychopper#usage] |  |
 | bundle_min_reads | integer | Minimum size of bam bundle for parallel processing. |  | 50000 |
 | isoform_table_nrows | integer | Maximum rows to dispay in the isoform report table |  | 5000 |
-
-
-### Miscellaneous Options
-
-| Nextflow parameter name  | Type | Description | Help | Default |
-|--------------------------|------|-------------|------|---------|
-| disable_ping | boolean | Enable to prevent sending a workflow ping. |  | False |
 
 

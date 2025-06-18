@@ -4,6 +4,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.7.0]
+### Changed
+- `split_bam` and `build_minimap_index_transcriptome` process memory allocation increased.
+- Updated recommended memory requirement.
+- Updated project description.
+- A common user issue is providing a ref_annotation and ref_genome parameter that have mismatched reference IDs, which causes the DE_analysis to fail. The workflow will now do an upfront check and give an error message if no overlap is found or a warning if some IDs are present in one file but not in the other.
+- Reconciled workflow with wf-template v5.5.0.
+- Sort the columns and rows of the gene and transcript count files.
+- DE_analysis alignment summary stats table no longer includes MAPQ or quality scores. MAPQ is not relevant for transcript alignment and quality scores are already available in the read summary section of the report. 
+### Fixed
+- `all_gene_counts.tsv` contained the DE counts results.
+- Reduced memory usage of the report workflow process.
+- Output BAM alignments in all cases unless the workflow is run with `transcriptome_source` set to `precomputed`.
+- Corrected the demo command in the `README.md`.
+- The merged transcriptome generated for differential expression analysis now only contains the exons and not the full genomic sequence.
+- Output the gene name annotated differential expression analysis count files only.
+- Only use full length reads in the differential expression analysis.
+
+## [v1.6.1]
+### Fixed
+- `merge_gff_compare` failing with empty GFF files.
+
+## [v1.6.0]
+### Fixed
+- v1.5.0 bug; access to undefined channel output bug when using precomputed transcriptome.
+- Bug where incorrect gene_id assigned in the DE tables.
+
+## [v1.5.0]
+### Updated
+- Workflow report updated to use `ezcharts`.
+### Fixed
+- Exons per isoforms histogram reporting incorrect numbers.
+- Output the `results_dexseq.tsv` file when `--de_analysis` enabled.
+### Removed
+- per-class gffcompare tracking files as there exists a combine tracking file. 
+
+## [v1.4.0]
+## Added
+- `--igv` parameter (default: false) for outputting IGV config allowing visualisation of read alignments in the EPI2ME App.
+- If required for IGV, reference indexes are output in to a `igv_reference` directory
+### Changed
+- BAMS are output in to a BAMS directory.
+- Reconcile with template 5.2.6.
+
+## [v1.3.0]
+### Removed
+- Fusion detection subworkflow, as the functionality is not robust enough for general use at this time.
+### Changed
+- Updated pychopper to 2.7.10
+## Added 
+- new `cdna_kit` options: PCS114 and PCB111/114
+
+## [v1.2.1]
+### Changed
+- Increase some memory and CPU allocations.
+
+## [v1.2.0]
+### Added
+- Workflow now accepts BAM or FASTQ files as input (using the --bam or --fastq parameters, respectively).
+### Changed
+- MA plot in the `results_dge.pdf` has been updated to match the MA plot in the report.
+### Added
+- Error message when running in `de_analysis` mode and `ref_annotation` input file contains unstranded annotations.
+
 ## [v1.1.1]
 ### Changed
 - Improved handling of different annotation file types (eg. `.gtf/.gff/.gff3`) in `de_analysis` mode.

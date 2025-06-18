@@ -6,10 +6,15 @@ process map_reads{
     */
     label "isoforms"
     cpus params.threads
+<<<<<<< HEAD
 
+=======
+    memory "31 GB"
+    publishDir path: "${params.out_dir}/${publish_prefix_bams}", mode: 'copy', pattern: "${sample_id}_reads_aln_sorted.bam*", overwrite: true
+>>>>>>> upstream/master
     input:
        tuple val(sample_id), path (fastq_reads), path(index), path(reference)
-
+       val publish_prefix_bams
     output:
        tuple val(sample_id), 
              path("${sample_id}_reads_aln_sorted.bam"), 
@@ -27,11 +32,14 @@ process map_reads{
         | samtools view -q ${params.minimum_mapping_quality} -F 2304 -Sb -\
         | seqkit bam -j 1 -x -T '${ContextFilter}' -\
         | samtools sort --write-index -@ 1 -o "${sample_id}_reads_aln_sorted.bam##idx##${sample_id}_reads_aln_sorted.bam.bai" - ;
-    ((cat "${sample_id}_reads_aln_sorted.bam" | seqkit bam -s -j 1 - 2>&1)  | tee ${sample_id}_read_aln_stats.tsv ) || true
+    ((cat "${sample_id}_reads_aln_sorted.bam" | seqkit bam -s -j 1 - 2>&1)  | tee "${sample_id}_read_aln_stats.tsv" ) || true
 
-    # Add sample id header and column
-    sed "s/\$/${sample_id}/" "${sample_id}_read_aln_stats.tsv" \
-        | sed "1 s/${sample_id}/sample_id/" > tmp
+    # Add sample id header and column; remove last column (File)
+    cat "${sample_id}_read_aln_stats.tsv" \
+        | sed "s/^/${sample_id} /" \
+        | sed "1 s/^${sample_id}/sample_id/" \
+        | awk 'NF{NF-=1};1' \
+        > tmp
     mv tmp "${sample_id}_read_aln_stats.tsv"
 
     if [[ -s "internal_priming_fail.tsv" ]];
@@ -47,8 +55,9 @@ workflow reference_assembly {
        index
        reference
        fastq_reads
+       publish_prefix_bams
     main:
-        map_reads(fastq_reads.combine(index).combine(reference))
+        map_reads(fastq_reads.combine(index).combine(reference), publish_prefix_bams)
     emit:
        bam = map_reads.out.bam
        stats = map_reads.out.stats

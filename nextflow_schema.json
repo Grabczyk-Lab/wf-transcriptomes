@@ -1,10 +1,12 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
-    "title": "aw1231/wf-transcriptomes",
-    "workflow_title": "Workflow GGSashimi Transcriptomes",
-    "description": "Transcriptome analysis including assembly and annotation of cDNA and direct RNA sequencing data, using GGSashimi and a read by read analysis.",
-    "url": "https://github.com/aw1231/wf-transcriptomes",
+    "title": "epi2me-labs/wf-transcriptomes",
+    "workflow_title": "Workflow Transcriptomes",
+    "description": "Transcriptome analysis of cDNA and direct RNA sequencing data.",
+    "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-transcriptomes/wf-transcriptomes-demo.tar.gz",
+    "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-transcriptomes/wf-transcriptomes-demo/aws.nextflow.config",
+    "url": "https://github.com/epi2me-labs/wf-transcriptomes",
     "type": "object",
     "definitions": {
         "input_options": {
@@ -21,6 +23,12 @@
                     "description": "FASTQ files to use in the analysis.",
                     "help_text": "This accepts one of three cases: (i) the path to a single FASTQ file; (ii) the path to a top-level directory containing FASTQ files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
                 },
+                "bam": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "BAM or unaligned BAM (uBAM) files to use in the analysis.",
+                    "help_text": "This accepts one of three cases: (i) the path to a single BAM file; (ii) the path to a top-level directory containing BAM files; (iii) the path to a directory containing one level of sub-directories which in turn contain BAM files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`."
+                },
                 "transcriptome_source": {
                     "type": "string",
                     "enum": [
@@ -29,7 +37,7 @@
                     ],
                     "default": "reference-guided",
                     "description": "Select how the transcriptome used for analysis should be prepared.",
-                    "help_text": "To analyse only gene fusions and differential expression use of an existing transcriptome may be preferred and so 'precomputed' should be selected. In this case the 'ref_transcriptome' parameter should be specified. To create a reference transcriptome using an existing reference genome, select 'reference guided' and specify the 'ref_genome' parameter."
+                    "help_text": "For differential expression analysis, use of an existing transcriptome may be preferred and so 'precomputed' should be selected. In this case the 'ref_transcriptome' parameter should be specified. To create a reference transcriptome using an existing reference genome, select 'reference guided' and specify the 'ref_genome' parameter."
                 },
                 "ref_genome": {
                     "type": "string",
@@ -52,7 +60,7 @@
                     "format": "file-path",
                     "demo_data": "${projectDir}/test_data/SIRV_isoforms.gtf",
                     "description": "A reference annotation in GFF2 or GFF3 format (extensions .gtf(.gz), .gff(.gz), .gff3(.gz)). Only annotation files from [Encode](https://www.encodeproject.org), [Ensembl](https://www.ensembl.org/index.html) and [NCBI](https://www.ncbi.nlm.nih.gov/) are supported.",
-                    "help_text": "This will be used for guiding the transcriptome assembly and to label transcripts with their corresponding gene identifiers."
+                    "help_text": "This will be used for guiding the transcriptome assembly and to label transcripts with their corresponding gene identifiers. Note: If in de_analysis mode transcript strands must be only + or -."
                 },
                 "direct_rna": {
                     "type": "boolean",
@@ -87,10 +95,24 @@
             "allOf": [
                 {
                     "required": [
-                        "fastq",
                         "transcriptome_source"
                     ]
-                }]
+                },
+                {
+                    "oneOf": [
+                        {
+                            "required": [
+                                "fastq"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "bam"
+                            ]
+                        }
+                    ]
+                }
+            ]
         },
         "output_options": {
             "title": "Output Options",
@@ -103,6 +125,13 @@
                     "format": "directory-path",
                     "default": "output",
                     "description": "Directory for output of all user-facing files."
+                },
+                "igv": {
+                    "title": "Show in IGV",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Visualize outputs in the EPI2ME IGV visualizer.",
+                    "help_text": "Enabling this option will visualize the output alignment files in the EPI2ME Desktop App IGV visualizer."
                 }
             }
         },
@@ -148,7 +177,7 @@
                     "type": "string",
                     "title": "Minimap2 index options",
                     "description": "Extra command-line options for minimap2 indexing.",
-                    "default": "-k14",
+                    "default": "-k 14",
                     "help_text": "See [minimap2 index options](https://lh3.github.io/minimap2/minimap2.html#4) for more information. These will only be relevant in the reference based transcriptome assembly."
                 },
                 "minimap2_opts": {
@@ -188,6 +217,49 @@
                 }
             }
         },
+        "differential_expression_options": {
+            "title": "Differential Expression Options",
+            "type": "object",
+            "description": "Options relevant to the differential expression section of the workflow, only need to set if running DE.",
+            "default": "",
+            "properties": {
+                "de_analysis": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Differential expression analysis",
+                    "description": "Run DE anaylsis",
+                    "help_text": "Running this requires you to provide at least two replicates for a control and treated sample as well as a sample sheet param."
+                },
+                "min_gene_expr": {
+                    "type": "integer",
+                    "title": "Minimum gene expression",
+                    "default": 10,
+                    "description": "The minimum number of total mapped sequence reads required for a gene to be considered in differential transcript usage analysis.",
+                    "help_text": "Filtering at the gene level ensures that the observed transcript ratios are calculated with a minimum number of counts per gene."
+                },
+                "min_feature_expr": {
+                    "type": "integer",
+                    "title": "Minimum feature expression",
+                    "default": 3,
+                    "description": "The minimum number of reads assigned to a transcript for it to be considered in differential transcript usage analysis.",
+                    "help_text": "Filter out transcripts that do not have this minimum number of transcript expression, reducing noise."
+                },
+                "min_samps_gene_expr": {
+                    "type": "integer",
+                    "title": "Minimum samples with gene expression",
+                    "description": "Set the minimum number of samples in which a gene is expressed to be included in the differential transcript usage analysis.",
+                    "default": 3,
+                    "help_text": "A gene must be expressed in at least this number of samples for the gene be included in the differential transcript usage analysis. Filtering at the gene level improves the reliability of the observed transcript ratios."
+                },
+                "min_samps_feature_expr": {
+                    "type": "integer",
+                    "title": "Minimum samples with feature expression",
+                    "default": 1,
+                    "description": "Set the minimum number of samples in which a transcript is expressed to be included in the differential transcript usage analysis.",
+                    "help_text": "A transcript must expressed in at least this minimum number of samples to be included in the analysis. Should be equal to the number of replicates per sample you have."
+                }
+            }
+        },
         "advanced_options": {
             "title": "Advanced Options",
             "type": "object",
@@ -206,6 +278,9 @@
                         "SQK-PCS109",
                         "SQK-PCS110",
                         "SQK-PCS111",
+                        "SQK-PCS114",
+                        "SQK-PCB111",
+                        "SQK-PCB114",
                         "SQK-LSK114"
                     ],
                     "description": "If cDNA reads are used, select the kit used.",
@@ -256,6 +331,15 @@
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
+                "store_dir": {
+                    "type": "string",
+                    "hidden": true
+                },
+                "disable_ping": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable to prevent sending a workflow ping."
+                },
                 "version": {
                     "type": "boolean",
                     "default": false,
@@ -279,6 +363,9 @@
             "$ref": "#/definitions/options_for_reference_based_workflow"
         },
         {
+            "$ref": "#/definitions/differential_expression_options"
+        },
+        {
             "$ref": "#/definitions/advanced_options"
         },
         {
@@ -300,7 +387,7 @@
     "resources": {
         "recommended": {
             "cpus": 16,
-            "memory": "32GB"
+            "memory": "64GB"
         },
         "minimum": {
             "cpus": 8,

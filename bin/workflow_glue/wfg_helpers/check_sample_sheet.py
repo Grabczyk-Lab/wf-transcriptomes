@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from .util import get_named_logger, wf_parser  # noqa: ABS101
+from ..util import get_named_logger, wf_parser  # noqa: ABS101
 
 
 # Some Excel users save their CSV as UTF-8 (and occasionally for a reason beyond my
@@ -38,6 +38,7 @@ def main(args):
     barcodes = []
     aliases = []
     sample_types = []
+    analysis_groups = []
     allowed_sample_types = [
         "test_sample", "positive_control", "negative_control", "no_template_control"
     ]
@@ -49,6 +50,21 @@ def main(args):
     try:
         encoding = determine_codec(args.sample_sheet)
         with open(args.sample_sheet, "r", encoding=encoding) as f:
+            try:
+                # Excel files don't throw any error until here
+                csv.Sniffer().sniff(f.readline())
+                f.seek(0)  # return to initial position again
+            except Exception as e:
+                # Excel fails with UniCode error
+                sys.stdout.write(
+                    "The sample sheet doesn't seem to be a CSV file.\n"
+                    "The sample sheet has to be a CSV file.\n"
+                    "Please verify that the sample sheet is a CSV file.\n"
+                    f"Parsing error: {e}"
+                 )
+
+                sys.exit()
+
             csv_reader = csv.DictReader(f)
             n_row = 0
             for row in csv_reader:
@@ -76,6 +92,10 @@ def main(args):
                     sample_types.append(row["type"])
                 except KeyError:
                     pass
+                try:
+                    analysis_groups.append(row["analysis_group"])
+                except KeyError:
+                    pass
     except Exception as e:
         sys.stdout.write(f"Parsing error: {e}")
         sys.exit()
@@ -84,6 +104,13 @@ def main(args):
     for barcode in barcodes:
         if not re.match(r'^barcode\d\d+$', barcode):
             sys.stdout.write("values in 'barcode' column are incorrect format")
+            sys.exit()
+
+    # check aliases are correct format
+    # for now we have decided they may not start with "barcode"
+    for alias in aliases:
+        if alias.startswith("barcode"):
+            sys.stdout.write("values in 'alias' column must not begin with 'barcode'")
             sys.exit()
 
     # check barcodes are all the same length
@@ -121,6 +148,14 @@ def main(args):
                     sys.stdout.write(
                         f"Sample sheet requires at least 1 of {required_type}")
                     sys.exit()
+    if analysis_groups:
+        # if there was a "analysis_group" column, make sure it had values for all
+        # samples
+        if not all(analysis_groups):
+            sys.stdout.write(
+                "if an 'analysis_group' column exists, it needs values in each row"
+            )
+            sys.exit()
 
     logger.info(f"Checked sample sheet {args.sample_sheet}.")
 

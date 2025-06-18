@@ -9,7 +9,7 @@
       "type": "aggregated"
     },
     "read-stats-per-file": {
-      "filepath": "fastq_ingress_results/reads/fastcat_stats/per-file-stats.tsv",
+      "filepath": "fastq_ingress_results/{{ alias }}//reads/fastcat_stats/per-file-stats.tsv",
       "title": "Per file read stats",
       "description": "A TSV with per file read stats, including all samples.",
       "mime-type": "text/tab-separated-values",
@@ -17,7 +17,7 @@
       "type": "aggregated"
     },
     "read-stats-per-read": {
-      "filepath": "fastq_ingress_results/reads/fastcat_stats/per-read-stats.tsv",
+      "filepath": "fastq_ingress_results/{{ alias }}//reads/fastcat_stats/per-read-stats.tsv",
       "title": "Read stats",
       "description": "A TSV with per read stats, including all samples.",
       "mime-type": "text/tab-separated-values",
@@ -25,7 +25,7 @@
       "type": "aggregated"
     },
     "run-ids": {
-      "filepath": "fastq_ingress_results/reads/fastcat_stats/run_ids",
+      "filepath": "fastq_ingress_results/{{ alias }}//reads/fastcat_stats/run_ids",
       "title": "Run ID's",
       "description": "List of run IDs present in reads.",
       "mime-type": "text/txt",
@@ -33,7 +33,7 @@
       "type": "aggregated"
     },
     "metamap": {
-      "filepath": "fastq_ingress_results/reads/metamap.json",
+      "filepath": "fastq_ingress_results/{{ alias }}//reads/metamap.json",
       "title": "Meta map json",
       "description": "Metadata used in workflow presented in a JSON.",
       "mime-type": "text/json",
@@ -41,7 +41,7 @@
       "type": "aggregated"
     },
     "sample-data": {
-      "filepath": "fastq_ingress_results/reads/{{ alias }}.fastq.gz",
+      "filepath": "fastq_ingress_results/{{ alias }}//reads/{{ alias }}.fastq.gz",
       "title": "Concatenated sequence data",
       "description": "Per sample reads concatenated in to one FASTQ file.",
       "mime-type": "text/json",
@@ -51,7 +51,7 @@
     "transcriptome": {
       "filepath": "{{ alias }}_transcriptome.fas",
       "title": "Assembled transcriptome",
-      "description": "Per sample assembled transcriptome.",
+      "description": "Per sample assembled transcriptome.  Not output if a reference annotation was supplied",
       "mime-type": "text/x-fasta",
       "optional": true,
       "type": "per-sample"
@@ -59,7 +59,7 @@
     "merged_transcriptome": {
       "filepath": "{{ alias }}_merged_transcriptome.fas",
       "title": "Annotated assembled transcriptome",
-      "description": "Per sample annotated assembled transcriptome.",
+      "description": "Per sample annotated assembled transcriptome. Only output if a reference annotation was supplied",
       "mime-type": "text/x-fasta",
       "optional": true,
       "type": "per-sample"
@@ -80,10 +80,98 @@
       "optional": true,
       "type": "per-sample"
     },
+    "dge-results-tsv": {
+      "filepath": "de_analysis/results_dge.tsv",
+      "title": "Differential gene expression results",
+      "description": "This is a gene-level result file that describes genes and their probability of showing differential expression between experimental conditions.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dge-report-pdf": {
+      "filepath": "de_analysis/results_dge.pdf",
+      "title": "Differential gene expression report",
+      "description": "Summary report of differential gene expression analysis as a PDF.",
+      "mime-type": "application/pdf",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dtu-gene-tsv": {
+      "filepath": "de_analysis/results_dtu_gene.tsv",
+      "title": "Differential transcript usage gene TSV",
+      "description": "This is a gene-level result file from DEXSeq that lists annotated genes and their probabilities of differential expression.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dtu-report-pdf": {
+      "filepath": "de_analysis/results_dtu.pdf",
+      "title": "Differential transcript usage report",
+      "description": "Summary report of differential transcript usage results as a PDF.",
+      "mime-type": "application/pdf",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dtu-transcript": {
+      "filepath": "de_analysis/results_dtu_transcript.tsv",
+      "title": "Differential transcript usage TSV",
+      "description": "This is a transcript-level result file from DEXSeq that lists annotated genes and their probabilities of differential expression.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dtu-stageR": {
+      "filepath": "de_analysis/results_dtu_stageR.tsv ",
+      "title": "Differential transcript usage stageR TSV",
+      "description": "This is the output from StageR and it shows both gene and transcript probabilities of differential expression",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "dexseq": {
+      "filepath": "de_analysis/results_dexseq.tsv",
+      "title": "Differential transcript usage DEXSeq TSV",
+      "description": "The complete output from the DEXSeq-analysis, shows both gene and transcript probabilities of differential expression.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "gene_counts": {
+      "filepath": "de_analysis/all_gene_counts.tsv",
+      "title": "Gene counts",
+      "description": "Raw gene counts created by the Salmon tool, before filtering.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
     "gene_counts_per_million": {
       "filepath": "de_analysis/cpm_gene_counts.tsv",
       "title": "Gene counts per million",
       "description": "This file shows counts per million (CPM) of the raw gene counts to facilitate comparisons across samples.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "transcript_counts": {
+      "filepath": "de_analysis/unfiltered_transcript_counts_with_genes.tsv",
+      "title": "Transcript counts",
+      "description": "Raw transcript counts created by the Salmon tool, before filtering. Includes reference to the associated gene ID.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "tpm_transcript_counts": {
+      "filepath": "de_analysis/unfiltered_tpm_transcript_counts.tsv",
+      "title": "Transcript per million counts",
+      "description": "This file shows transcripts per million (TPM) of the raw counts to facilitate comparisons across samples.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "transcipt_counts_filtered": {
+      "filepath": "de_analysis/filtered_transcript_counts_with_genes.tsv",
+      "title": "Transcript counts filtered",
+      "description": "Filtered transcript counts, used for differential transcript usage analysis. Includes a reference to the associated gene ID.",
       "mime-type": "text/tab-separated-values",
       "optional": true,
       "type": "aggregated"
@@ -95,6 +183,54 @@
       "mime-type": "text/tab-separated-values",
       "optional": true,
       "type": "per-sample"
-    }   
+    },
+    "final_non_redundant_transcriptome": {
+      "filepath": "de_analysis/final_non_redundant_transcriptome.fasta",
+      "title": "Final non redundant transcriptome",
+      "description": "Transcripts that were used for differential expression analysis including novel transcripts with the identifiers used for DE analysis. Only applicable when the ref_transcriptome parameter is not provided.",
+      "mime-type": "text/x-fasta",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "reference-index": {
+      "filepath": "igv_reference/{{ ref_genome_file }}.fai",
+      "title": "Index of reference FASTA file",
+      "description": "Reference genome index of the FASTA file required for IGV config.",
+      "mime-type": "text/tab-separated-values",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "reference-gzi-index": {
+        "filepath": "igv_reference/{{ ref_genome_file }}.gzi",
+        "title": "GZI index of the reference FASTA file",
+        "description": "GZI Index of the reference FASTA file.",
+        "mime-type": "application/octet-stream",
+        "optional": true,
+        "type": "aggregated"
+    },
+    "igv-config": {
+      "filepath": "igv.json",
+      "title": "JSON configuration file for IGV browser",
+      "description": "JSON configuration file to be loaded in IGV for visualising alignments against the reference.",
+      "mime-type": "text/json",
+      "optional": true,
+      "type": "aggregated"
+    },
+    "minimap2-bam": {
+      "filepath": "BAMS/{{ alias }}.reads_aln_sorted.bam",
+      "title": "BAM file (minimap2)",
+      "description": "BAM file generated from mapping input reads to the reference.",
+      "mime-type": "application/gzip",
+      "optional": true,
+      "type": "per-sample"
+    },
+    "minimap2-index": {
+      "filepath": "BAMS/{{ alias }}.reads_aln_sort.bam.bai",
+      "title": "BAM index file (minimap2)",
+      "description": "Index file generated from mapping input reads to the reference.",
+      "mime-type": "application/octet-stream",
+      "optional": true,
+      "type": "per-sample"
+    }
   }
 }

@@ -1,1 +1,1 @@
-Transcriptome analysis including assembly and annotation of cDNA and direct RNA sequencing data, gene fusions and differential expression.
+Transcriptome analysis of cDNA and direct RNA sequencing data.

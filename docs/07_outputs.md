@@ -3,13 +3,13 @@ Output files may be aggregated including information for all samples or provided
 | Title | File path | Description | Per sample or aggregated |
 |-------|-----------|-------------|--------------------------|
 | workflow report | wf-transcriptomes-report.html | a HTML report document detailing the primary findings of the workflow | aggregated |
-| Per file read stats | fastq_ingress_results/reads/fastcat_stats/per-file-stats.tsv | A TSV with per file read stats, including all samples. | aggregated |
-| Read stats | fastq_ingress_results/reads/fastcat_stats/per-read-stats.tsv | A TSV with per read stats, including all samples. | aggregated |
-| Run ID's | fastq_ingress_results/reads/fastcat_stats/run_ids | List of run IDs present in reads. | aggregated |
-| Meta map json | fastq_ingress_results/reads/metamap.json | Metadata used in workflow presented in a JSON. | aggregated |
-| Concatenated sequence data | fastq_ingress_results/reads/{{ alias }}.fastq.gz | Per sample reads concatenated in to one FASTQ file. | per-sample |
-| Assembled transcriptome | {{ alias }}_transcriptome.fas | Per sample assembled transcriptome. | per-sample |
-| Annotated assembled transcriptome | {{ alias }}_merged_transcriptome.fas | Per sample annotated assembled transcriptome. | per-sample |
+| Per file read stats | fastq_ingress_results/{{ alias }}//reads/fastcat_stats/per-file-stats.tsv | A TSV with per file read stats, including all samples. | aggregated |
+| Read stats | fastq_ingress_results/{{ alias }}//reads/fastcat_stats/per-read-stats.tsv | A TSV with per read stats, including all samples. | aggregated |
+| Run ID's | fastq_ingress_results/{{ alias }}//reads/fastcat_stats/run_ids | List of run IDs present in reads. | aggregated |
+| Meta map json | fastq_ingress_results/{{ alias }}//reads/metamap.json | Metadata used in workflow presented in a JSON. | aggregated |
+| Concatenated sequence data | fastq_ingress_results/{{ alias }}//reads/{{ alias }}.fastq.gz | Per sample reads concatenated in to one FASTQ file. | per-sample |
+| Assembled transcriptome | {{ alias }}_transcriptome.fas | Per sample assembled transcriptome.  Not output if a reference annotation was supplied | per-sample |
+| Annotated assembled transcriptome | {{ alias }}_merged_transcriptome.fas | Per sample annotated assembled transcriptome. Only output if a reference annotation was supplied | per-sample |
 | Alignment summary statistics | {{ alias }}_read_aln_stats.tsv | Per sample alignment summary statistics. | per-sample |
 | GFF compare results. | {{ alias }}_gffcompare | All GFF compare output files. | per-sample |
 | Differential gene expression results | de_analysis/results_dge.tsv | This is a gene-level result file that describes genes and their probability of showing differential expression between experimental conditions. | aggregated |
@@ -25,6 +25,9 @@ Output files may be aggregated including information for all samples or provided
 | Transcript per million counts | de_analysis/unfiltered_tpm_transcript_counts.tsv | This file shows transcripts per million (TPM) of the raw counts to facilitate comparisons across samples. | aggregated |
 | Transcript counts filtered | de_analysis/filtered_transcript_counts_with_genes.tsv | Filtered transcript counts, used for differential transcript usage analysis. Includes a reference to the associated gene ID. | aggregated |
 | Transcript info table | {{ alias }}_transcripts_table.tsv | This file details each isoform that was reconstructed from the input reads. It contains a subset of columns from the .tmap output from [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) | per-sample |
-| Final non redundant transcriptome | de_analysis/final_non_redundant_transcriptome.fasta | Transcripts that were used for differential expression analysis including novel transcripts with the identifiers used for DE analysis. | aggregated |
-| Fusion transcript sequences | jaffal_output_{{ alias }}/jaffa_results.fasta | Fusion transcript sequences output by Jaffa. | per-sample |
-| Fusion transcript sequence summary file | jaffal_output_{{ alias }}/jaffa_results.csv | Fusion transcript sequences summary file output by Jaffa. | per-sample |
+| Final non redundant transcriptome | de_analysis/final_non_redundant_transcriptome.fasta | Transcripts that were used for differential expression analysis including novel transcripts with the identifiers used for DE analysis. Only applicable when the ref_transcriptome parameter is not provided. | aggregated |
+| Index of reference FASTA file | igv_reference/{{ ref_genome_file }}.fai | Reference genome index of the FASTA file required for IGV config. | aggregated |
+| GZI index of the reference FASTA file | igv_reference/{{ ref_genome_file }}.gzi | GZI Index of the reference FASTA file. | aggregated |
+| JSON configuration file for IGV browser | igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reference. | aggregated |
+| BAM file (minimap2) | BAMS/{{ alias }}.reads_aln_sorted.bam | BAM file generated from mapping input reads to the reference. | per-sample |
+| BAM index file (minimap2) | BAMS/{{ alias }}.reads_aln_sort.bam.bai | Index file generated from mapping input reads to the reference. | per-sample |
